@@ -148,7 +148,7 @@ fn main() {
 		rotate_points();
 
 		window.update_with_buffer(
-			&buffer,
+			&buffer,	// cannot borrow `buffer` as immutable because it is also borrowed as mutable, immutable borrow occurs here
 			SIDE_LENGTH as usize,
 			SIDE_LENGTH as usize
 		).unwrap();
