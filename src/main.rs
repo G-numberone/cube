@@ -20,8 +20,6 @@ fn main() {
 		[4, 6], [6, 7]
 	];
 
-	static mut LINE_POINTS: [[i32; 2]; 10000] = [[0, 0]; 10000];
-
 	let theta: f32 = 0.01;
 	let sine_theta: f32 = theta.sin();
 	let cosine_theta: f32 = theta.cos();
@@ -74,22 +72,29 @@ fn main() {
 	let mut buffer: Vec<u32> = vec![WHITE; ( SIDE_LENGTH * SIDE_LENGTH) as usize];
 
 	fn round(n: f32) -> u32 {
-		(n + 0.5).floor() as u32
+		return (n + 0.5).floor() as u32
 	}
 
-	let index_pixel = |x: u32, y: u32| unsafe {
-		let mut place: usize = 0;
-
-		for i in 0 .. LINE_POINTS.len() {
-			if LINE_POINTS[i] != [0, 0] {
-				place = i;
-			}
+	let mut set_pixel_in_buffer = |x: u32, y: u32| {
+		let index = || {
+			return if y > 800 {
+				0
+			} else if y != 0 {
+				println!("Success!\n{0} : {1}", x, y);
+				((y - 1) * SIDE_LENGTH + x - 1) as usize
+			} else {
+				x as usize
+			};
 		};
 
-		LINE_POINTS[place] = [x as i32, y as i32];
+		if index() >= 640000 && index() == 0 {
+			println!("out of bounds ???\n{0}, {1}, {2}", index(), x, y)
+		} else {
+			buffer[index()] = BLACK;
+		};
 	};
 
-	let drawline = |x0: f32, y0: f32, x1: f32, y1: f32| {
+	let mut drawline = |x0: f32, y0: f32, x1: f32, y1: f32| {
 		let dx = x1 - x0;
 		let dy = y1 - y0;
 		let mut x = x0;
@@ -98,14 +103,14 @@ fn main() {
 
 		while x < x1 {
 			if p >= 0.0 {
-				index_pixel(
+				set_pixel_in_buffer(
 					round(x),
 					round(y)
 				);
 				y += 1.0;
 				p += 2.0 * dy - 2.0 * dx;
 			} else {
-				index_pixel(
+				set_pixel_in_buffer(
 					round(x),
 					round(y)
 				);
@@ -115,7 +120,7 @@ fn main() {
 		};
 	};
 
-	let rotate_points = || unsafe {
+	let mut rotate_points = || unsafe {
 		for v in CONNECTIONS {
 			let start = [
 				POINTS[v[0]][0],
@@ -142,25 +147,6 @@ fn main() {
 	loop {
 		rotate_points();
 
-		unsafe {
-			for i in 0 .. LINE_POINTS.len() {
-				let v = LINE_POINTS[i];
-
-				let x = v[0];
-				let y = v[1];
-
-				if y > 800 || y == 0 {
-					LINE_POINTS[i] = [0, 0];
-				} else {
-					println!("Success!\n{0} : {1}", x, y);
-					let index = ((y - 1) * SIDE_LENGTH as i32 + x - 1) as usize;
-					buffer[index] = BLACK;
-				};
-
-				LINE_POINTS = [[0, 0]; 10000];
-			};
-		};
-
 		window.update_with_buffer(
 			&buffer,
 			SIDE_LENGTH as usize,
@@ -169,6 +155,6 @@ fn main() {
 
 		if !window.is_open() {
 			std::process::exit(69);
-		};
-	};
+		}
+	}
 }
