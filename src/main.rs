@@ -155,11 +155,17 @@ fn main() {
 					let index = ((y - 1) * SIDE_LENGTH as i32 + x - 1) as usize;
 					buffer[index] = BLACK;
 				};
-
-				LINE_POINTS = [[0, 0]; 10];
 			};
+			LINE_POINTS = [[0, 0]; 10];
 		};
 
+		window.update_with_buffer(
+			&buffer,
+			SIDE_LENGTH as usize,
+			SIDE_LENGTH as usize
+		).unwrap();
+
+		buffer = vec![WHITE; (SIDE_LENGTH * SIDE_LENGTH) as usize];
 		window.update_with_buffer(
 			&buffer,
 			SIDE_LENGTH as usize,
