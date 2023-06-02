@@ -87,7 +87,7 @@ fn main() {
 
 	let mut index: usize = 0;
 	let mut index_pixel = |x: u32, y: u32| unsafe {
-		if index == SIDE_LENGTH as usize {
+		if index == TOTAL_LINE_LENGTH {
 			println!("yeah it went over")
 		} else {
 			LINE_POINTS[index] = [x as i32, y as i32];
