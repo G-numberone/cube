@@ -100,8 +100,8 @@ fn main() {
 
 	// bresenham's line drawing algorithm
 	let drawline = |mut x0: f32, mut y0: f32, mut x1: f32, mut y1: f32| {
-		if x1 > x0 { swap(&mut x1, &mut x0) }
-		if y1 > y0 { swap(&mut y1, &mut y0) }
+		if x1 < x0 { swap(&mut x1, &mut x0) }
+		if y1 < y0 { swap(&mut y1, &mut y0) }
 
 		let m = 2.0 * (y0 - y1);
 		let mut slope = m - (x1 - x0);
@@ -141,7 +141,7 @@ fn main() {
 		rotate_z();
 	};
 
-	drawline(200.0, 600.0, 600.0, 200.0);
+	drawline(200.0, 600.0, 600.0, 200.0); // TODO: fix this shit becoming horizontal
 	drawline(200.0, 600.0, 200.0, 200.0);
 	drawline(200.0, 600.0, 600.0, 600.0);
 
@@ -159,6 +159,10 @@ fn main() {
 			window
 				.update_with_buffer(&buffer, SIDE_LENGTH as usize, SIDE_LENGTH as usize)
 				.unwrap();
+
+			if !window.is_open() {
+				std::process::exit(69);
+			};
 		}
 	}
 
