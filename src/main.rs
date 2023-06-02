@@ -85,17 +85,19 @@ fn main() {
 		(n + 0.5).floor() as u32
 	}
 
-	let index_pixel = |x: u32, y: u32| unsafe {
-		for mut i in LINE_POINTS {
-			if i == [0, 0] {
-				i = [x as i32, y as i32];
-			};
+	let mut index: usize = 0;
+	let mut index_pixel = |x: u32, y: u32| unsafe {
+		if index == SIDE_LENGTH as usize {
+			println!("yeah it went over")
+		} else {
+			LINE_POINTS[index] = [x as i32, y as i32];
 			println!("Indexed pixel ({x:?}, {y:?})");
+			index += 1;
 		}
 	};
 
 	// bresenham's line drawing algorithm
-	let drawline = |x0: f32, y0: f32, x1: f32, y1: f32| {
+	let mut drawline = |x0: f32, y0: f32, x1: f32, y1: f32| {
 		let dx = x1 - x0;
 		let dy = y1 - y0;
 		let mut x = x0;
@@ -115,7 +117,7 @@ fn main() {
 		}
 	};
 
-	let rotate_points = || unsafe {
+	let mut rotate_points = || unsafe {
 		for v in CONNECTIONS {
 			let start = [POINTS[v[0]][0], POINTS[v[0]][1]];
 			let end = [POINTS[v[1]][0], POINTS[v[1]][1]];
@@ -130,19 +132,14 @@ fn main() {
 
 	loop {
 		rotate_points();
-		{
-			buffer = vec![WHITE; (SIDE_LENGTH * SIDE_LENGTH) as usize];
-			window
-				.update_with_buffer(&buffer, SIDE_LENGTH as usize, SIDE_LENGTH as usize)
-				.unwrap();
-		}
+
 
 		unsafe {
 			for mut i in LINE_POINTS {
 				let x = i[0];
 				let y = i[1];
 
-				if y > 800 || y == 0 {
+				if y > SIDE_LENGTH as i32 || y == 0 {
 					i = [0, 0];
 				} else {
 					let index = ((y - 1) * SIDE_LENGTH as i32 + x - 1) as usize;
@@ -151,6 +148,13 @@ fn main() {
 			}
 			LINE_POINTS = [[0, 0]; TOTAL_LINE_LENGTH];
 		};
+
+		{
+			buffer = vec![WHITE; (SIDE_LENGTH * SIDE_LENGTH) as usize];
+			window
+				.update_with_buffer(&buffer, SIDE_LENGTH as usize, SIDE_LENGTH as usize)
+				.unwrap();
+		}
 
 		window
 			.update_with_buffer(&buffer, SIDE_LENGTH as usize, SIDE_LENGTH as usize)
