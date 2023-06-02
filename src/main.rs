@@ -26,7 +26,7 @@ fn main() {
 		[6, 7],
 	];
 
-	const TOTAL_LINE_LENGTH: usize = 200;
+	const TOTAL_LINE_LENGTH: usize = 4000;
 	static mut LINE_POINTS: [[i32; 2]; TOTAL_LINE_LENGTH] = [[0, 0]; TOTAL_LINE_LENGTH];
 
 	let theta: f32 = 0.01;
@@ -85,19 +85,19 @@ fn main() {
 		(n + 0.5).floor() as u32
 	}
 
-	let mut index: usize = 0;
-	let mut index_pixel = |x: u32, y: u32| unsafe {
-		if index == TOTAL_LINE_LENGTH {
+	static mut INDEX: usize = 0;
+	let index_pixel = |x: u32, y: u32| unsafe {
+		if INDEX == TOTAL_LINE_LENGTH {
 			println!("yeah it went over")
 		} else {
-			LINE_POINTS[index] = [x as i32, y as i32];
+			LINE_POINTS[INDEX] = [x as i32, y as i32];
 			println!("Indexed pixel ({x:?}, {y:?})");
-			index += 1;
+			INDEX += 1;
 		}
 	};
 
 	// bresenham's line drawing algorithm
-	let mut drawline = |x0: f32, y0: f32, x1: f32, y1: f32| {
+	let drawline = |x0: f32, y0: f32, x1: f32, y1: f32| {
 		let dx = x1 - x0;
 		let dy = y1 - y0;
 		let mut x = x0;
@@ -117,7 +117,7 @@ fn main() {
 		}
 	};
 
-	let mut rotate_points = || unsafe {
+	let rotate_points = || unsafe {
 		for v in CONNECTIONS {
 			let start = [POINTS[v[0]][0], POINTS[v[0]][1]];
 			let end = [POINTS[v[1]][0], POINTS[v[1]][1]];
@@ -130,9 +130,8 @@ fn main() {
 		rotate_z();
 	};
 
-	loop {
+	//loop {
 		rotate_points();
-
 
 		unsafe {
 			for mut i in LINE_POINTS {
@@ -142,15 +141,17 @@ fn main() {
 				if y > SIDE_LENGTH as i32 || y == 0 {
 					i = [0, 0];
 				} else {
-					let index = ((y - 1) * SIDE_LENGTH as i32 + x - 1) as usize;
-					buffer[index] = BLACK;
+					let buffer_index = ((y - 1) * SIDE_LENGTH as i32 + x - 1) as usize;
+					buffer[buffer_index] = BLACK;
+					println!("Indexed to buffer: {buffer_index:?}");
 				};
 			}
 			LINE_POINTS = [[0, 0]; TOTAL_LINE_LENGTH];
+			INDEX = 0;
 		};
 
 		{
-			buffer = vec![WHITE; (SIDE_LENGTH * SIDE_LENGTH) as usize];
+			//buffer = vec![WHITE; (SIDE_LENGTH * SIDE_LENGTH) as usize];
 			window
 				.update_with_buffer(&buffer, SIDE_LENGTH as usize, SIDE_LENGTH as usize)
 				.unwrap();
@@ -160,8 +161,8 @@ fn main() {
 			.update_with_buffer(&buffer, SIDE_LENGTH as usize, SIDE_LENGTH as usize)
 			.unwrap();
 
-		if !window.is_open() {
-			std::process::exit(69);
-		};
-	}
+		//if !window.is_open() {
+		//	std::process::exit(69);
+		//};
+	//}
 }
