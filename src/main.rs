@@ -34,31 +34,31 @@ fn main() {
 	let cosine_theta: f32 = theta.cos();
 
 	let rotate_x = || unsafe {
-		for mut i in POINTS {
-			i = [
-				i[0],
-				i[1] * cosine_theta + i[2] * -sine_theta,
-				i[1] * sine_theta + i[2] * cosine_theta,
-			];
-		}
+		POINTS.into_iter().for_each(|mut point| {
+			point = [
+				point[0],
+				point[1] * cosine_theta + point[2] * -sine_theta,
+				point[1] * sine_theta + point[2] * cosine_theta
+			]
+		});
 	};
 	let rotate_y = || unsafe {
-		for mut i in POINTS {
-			i = [
-				i[0] * cosine_theta + i[2] * sine_theta,
-				i[1],
-				i[0] * -sine_theta + i[2] * cosine_theta,
-			];
-		}
+		POINTS.into_iter().for_each(|mut point| {
+			point = [
+				point[0] * cosine_theta + point[2] * sine_theta,
+				point[1],
+				point[0] * -sine_theta + point[2] * cosine_theta
+			]
+		});
 	};
 	let rotate_z = || unsafe {
-		for mut i in POINTS {
-			i = [
-				i[0] * cosine_theta + i[1] * -sine_theta,
-				i[0] * sine_theta + i[1] * cosine_theta,
-				i[2],
+		POINTS.into_iter().for_each(|mut point| {
+			point = [
+				point[0] * cosine_theta + point[1] * -sine_theta,
+				point[0] * sine_theta + point[1] * cosine_theta,
+				point[2],
 			];
-		}
+		});
 	};
 
 	const SIDE_LENGTH: u32 = 800;
@@ -69,6 +69,7 @@ fn main() {
 		WindowOptions::default(),
 	)
 		.expect("something happened :(");
+	window.limit_update_rate(None);
 
 	const fn from_u8_rgb(r: u8, g: u8, b: u8) -> u32 {
 		// stolen from minifb docs
@@ -80,6 +81,7 @@ fn main() {
 	static BLACK: u32 = from_u8_rgb(0, 0, 0);
 
 	let mut buffer: Vec<u32> = vec![WHITE; (SIDE_LENGTH * SIDE_LENGTH) as usize];
+	let blank_buffer: Vec<u32> = vec![WHITE; (SIDE_LENGTH * SIDE_LENGTH) as usize];
 
 	fn round(n: f32) -> u32 {
 		(n + 0.5).floor() as u32
@@ -88,10 +90,9 @@ fn main() {
 	static mut INDEX: usize = 0;
 	let index_pixel = |x: u32, y: u32| unsafe {
 		if INDEX == TOTAL_LINE_LENGTH {
-			println!("yeah it went over")
+			println!("Error: Points array lacks sufficient space");
 		} else {
 			LINE_POINTS[INDEX] = [x as i32, y as i32];
-			println!("Indexed pixel ({x:?}, {y:?})");
 			INDEX += 1;
 		}
 	};
@@ -130,7 +131,7 @@ fn main() {
 		rotate_z();
 	};
 
-	//loop {
+	loop {
 		rotate_points();
 
 		unsafe {
@@ -150,19 +151,16 @@ fn main() {
 			INDEX = 0;
 		};
 
-		{
-			//buffer = vec![WHITE; (SIDE_LENGTH * SIDE_LENGTH) as usize];
-			window
-				.update_with_buffer(&buffer, SIDE_LENGTH as usize, SIDE_LENGTH as usize)
-				.unwrap();
-		}
+		window
+			.update_with_buffer(&blank_buffer, SIDE_LENGTH as usize, SIDE_LENGTH as usize)
+			.unwrap();
 
 		window
 			.update_with_buffer(&buffer, SIDE_LENGTH as usize, SIDE_LENGTH as usize)
 			.unwrap();
 
-		//if !window.is_open() {
-		//	std::process::exit(69);
-		//};
-	//}
+		if !window.is_open() {
+			std::process::exit(69);
+		};
+	}
 }
