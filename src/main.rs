@@ -63,7 +63,7 @@ fn main() {
 
 	const SIDE_LENGTH: u32 = 800;
 	let mut window = Window::new(
-		"wa'er",
+		"and so",
 		SIDE_LENGTH as usize,
 		SIDE_LENGTH as usize,
 		WindowOptions::default(),
@@ -72,7 +72,6 @@ fn main() {
 	window.limit_update_rate(None);
 
 	const fn from_u8_rgb(r: u8, g: u8, b: u8) -> u32 {
-		// stolen from minifb docs
 		let (r, g, b) = (r as u32, g as u32, b as u32);
 		(r << 16) | (g << 8) | b
 	}
@@ -84,21 +83,25 @@ fn main() {
 	let blank_buffer: Vec<u32> = vec![WHITE; (SIDE_LENGTH * SIDE_LENGTH) as usize];
 
 	fn round(n: f32) -> u32 {
-		(n + 0.5).floor() as u32
+		if n < 0.0 {
+			0
+		} else {
+			(n + 0.5).floor() as u32
+		}
 	}
 
 	static mut INDEX: usize = 0;
 	let index_pixel = |x: u32, y: u32| unsafe {
-		if INDEX >= TOTAL_LINE_LENGTH {
-			println!("{INDEX}");
-			INDEX += 1;
+		if INDEX >= TOTAL_LINE_LENGTH || x == 0 || y == 0 {
+
 		} else {
 			LINE_POINTS[INDEX] = [x as i32, y as i32];
+			// TODO: find out why this keeps saying (200, 200), it isn't incrementing???
+			println!("Indexed ({}, {})", x as i32, y as i32);
 			INDEX += 1;
 		}
 	};
 
-	// bresenham's line drawing algorithm
 	let drawline = |mut x0: f32, mut y0: f32, x1: f32, y1: f32| {
 		let dx = (x1 - x0).abs();
 		let sx = if x0 < x1 { 1.0 } else { -1.0 };
@@ -113,13 +116,13 @@ fn main() {
 			let e2 = 2.0 * error;
 
 			if e2 >= dy {
-				if x0 == x1 { break }
+				if x0 >= x1 { break }
 				error += dy;
 				x0 += sx;
 			}
 
-			if e2 <= dx {
-				if y0 == y1 { break }
+			if e2 >= dx {
+				if y0 >= y1 { break }
 				error += dx;
 				y0 += sy;
 			}
@@ -130,6 +133,8 @@ fn main() {
 		for v in CONNECTIONS {
 			let start = [POINTS[v[0]][0], POINTS[v[0]][1]];
 			let end = [POINTS[v[1]][0], POINTS[v[1]][1]];
+
+			println!("start & end: {start:?}, {end:?}");
 
 			drawline(start[0], start[1], end[0], end[1]);
 		}
@@ -145,7 +150,7 @@ fn main() {
 
 		unsafe {
 			for i in LINE_POINTS {
-				if i == [0, 0] { break }
+				if i == [0, 0] { continue }
 
 				let x = i[0];
 				let y = i[1];
@@ -157,7 +162,6 @@ fn main() {
 			}
 			LINE_POINTS = [[0, 0]; TOTAL_LINE_LENGTH];
 			INDEX = 0;
-			println!("Reset index!");
 		};
 
 		window
