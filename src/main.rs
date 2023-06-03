@@ -1,4 +1,3 @@
-use std::mem::swap;
 use minifb::*;
 
 fn main() {
@@ -99,33 +98,31 @@ fn main() {
 	};
 
 	// bresenham's line drawing algorithm
-	let drawline = |mut x0: f32, mut y0: f32, mut x1: f32, mut y1: f32| {
-		if x1 < x0 { swap(&mut x1, &mut x0) }
-		if y1 < y0 { swap(&mut y1, &mut y0) }
+	let drawline = |mut x0: f32, mut y0: f32, x1: f32, y1: f32| {
+		let dx = (x1 - x0).abs();
+		let sx = if x0 < x1 { 1.0 } else { -1.0 };
+		let dy = -((y1 - y0).abs());
+		let sy = if y0 < y1 { 1.0 } else { -1.0 };
+		let mut error = dx + dy;
 
-		let m = 2.0 * (y0 - y1);
-		let mut slope = m - (x1 - x0);
-		let mut x = x0;
-		let mut y = y0;
+		loop {
+			index_pixel(round(x0), round(y0));
+			if x0 == x1 && y0 == y1 { break }
 
-		if x != x1 {
-			while x <= x1 {
-				index_pixel(round(x), round(y));
-				slope += m;
+			let e2 = 2.0 * error;
 
-				if slope >= 0.0 {
-					y += 1.0;
-					slope += 2.0 * (x1 - x0);
-				}
-
-				x += 1.0;
+			if e2 >= dy {
+				if x0 == x1 { break }
+				error += dy;
+				x0 += sx;
 			}
-		} else {
-			while y <= y1 {
-				index_pixel(round(x), round(y));
-				y += 1.0;
+
+			if e2 <= dx {
+				if y0 == y1 { break }
+				error += dx;
+				y0 += sy;
 			}
-		};
+		}
 	};
 
 	let rotate_points = || unsafe {
@@ -141,32 +138,6 @@ fn main() {
 		rotate_z();
 	};
 
-	drawline(200.0, 600.0, 600.0, 200.0); // TODO: fix this shit becoming horizontal
-	drawline(200.0, 600.0, 200.0, 200.0);
-	drawline(200.0, 600.0, 600.0, 600.0);
-
-	unsafe {
-		for i in LINE_POINTS {
-			let x = i[0];
-			let y = i[1];
-
-			if !(y > SIDE_LENGTH as i32 || y == 0) {
-				let buffer_index = ((y - 1) * SIDE_LENGTH as i32 + x - 1) as usize;
-				buffer[buffer_index] = BLACK;
-			};
-		}
-		loop {
-			window
-				.update_with_buffer(&buffer, SIDE_LENGTH as usize, SIDE_LENGTH as usize)
-				.unwrap();
-
-			if !window.is_open() {
-				std::process::exit(69);
-			};
-		}
-	}
-
-	/*
 	loop {
 		rotate_points();
 
@@ -197,5 +168,4 @@ fn main() {
 			std::process::exit(69);
 		};
 	}
-	*/
 }
