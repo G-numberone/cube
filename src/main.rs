@@ -26,7 +26,7 @@ fn main() {
 		[6, 7],
 	];
 
-	const TOTAL_LINE_LENGTH: usize = 4000;
+	const TOTAL_LINE_LENGTH: usize = 16000;
 	static mut LINE_POINTS: [[i32; 2]; TOTAL_LINE_LENGTH] = [[0, 0]; TOTAL_LINE_LENGTH];
 
 	let theta: f32 = 0.1;
@@ -34,31 +34,31 @@ fn main() {
 	let cosine_theta: f32 = theta.cos();
 
 	let rotate_x = || unsafe {
-		POINTS.into_iter().for_each(|mut point| {
-			point = [
+		for point in POINTS.iter_mut() {
+			*point = [
 				point[0],
 				point[1] * cosine_theta + point[2] * -sine_theta,
 				point[1] * sine_theta + point[2] * cosine_theta,
-			]
-		});
+			];
+		}
 	};
 	let rotate_y = || unsafe {
-		POINTS.into_iter().for_each(|mut point| {
-			point = [
+		for point in POINTS.iter_mut() {
+			*point = [
 				point[0] * cosine_theta + point[2] * sine_theta,
 				point[1],
 				point[0] * -sine_theta + point[2] * cosine_theta,
-			]
-		});
+			];
+		}
 	};
 	let rotate_z = || unsafe {
-		POINTS.into_iter().for_each(|mut point| {
-			point = [
+		for point in POINTS.iter_mut() {
+			*point = [
 				point[0] * cosine_theta + point[1] * -sine_theta,
 				point[0] * sine_theta + point[1] * cosine_theta,
 				point[2],
 			];
-		});
+		}
 	};
 
 	const SIDE_LENGTH: u32 = 800;
@@ -78,7 +78,7 @@ fn main() {
 	}
 
 	const WHITE: u32 = from_u8_rgb(255, 255, 255);
-	static BLACK: u32 = from_u8_rgb(0, 0, 0);
+	const BLACK: u32 = from_u8_rgb(0, 0, 0);
 
 	let mut buffer: Vec<u32> = vec![WHITE; (SIDE_LENGTH * SIDE_LENGTH) as usize];
 	let blank_buffer: Vec<u32> = vec![WHITE; (SIDE_LENGTH * SIDE_LENGTH) as usize];
@@ -89,8 +89,9 @@ fn main() {
 
 	static mut INDEX: usize = 0;
 	let index_pixel = |x: u32, y: u32| unsafe {
-		if INDEX == TOTAL_LINE_LENGTH {
-			println!("Error: Points array lacks sufficient space");
+		if INDEX >= TOTAL_LINE_LENGTH {
+			println!("{INDEX}");
+			INDEX += 1;
 		} else {
 			LINE_POINTS[INDEX] = [x as i32, y as i32];
 			INDEX += 1;
@@ -139,21 +140,24 @@ fn main() {
 	};
 
 	loop {
+
 		rotate_points();
 
 		unsafe {
 			for i in LINE_POINTS {
+				if i == [0, 0] { break }
+
 				let x = i[0];
 				let y = i[1];
 
-				if !(y > SIDE_LENGTH as i32 || y == 0) {
+				if y <= SIDE_LENGTH as i32 {
 					let buffer_index = ((y - 1) * SIDE_LENGTH as i32 + x - 1) as usize;
 					buffer[buffer_index] = BLACK;
-					println!("Indexed to buffer: {buffer_index:?}");
 				};
 			}
 			LINE_POINTS = [[0, 0]; TOTAL_LINE_LENGTH];
 			INDEX = 0;
+			println!("Reset index!");
 		};
 
 		window
