@@ -1,3 +1,5 @@
+use std::thread::sleep;
+use std::time::Duration;
 use minifb::*;
 
 fn main() {
@@ -26,10 +28,10 @@ fn main() {
 		[6, 7],
 	];
 
-	const TOTAL_LINE_LENGTH: usize = 16000;
+	const TOTAL_LINE_LENGTH: usize = 8000;
 	static mut LINE_POINTS: [[i32; 2]; TOTAL_LINE_LENGTH] = [[0, 0]; TOTAL_LINE_LENGTH];
 
-	let theta: f32 = 0.1;
+	let theta: f32 = 0.01;
 	let sine_theta: f32 = theta.sin();
 	let cosine_theta: f32 = theta.cos();
 
@@ -68,7 +70,7 @@ fn main() {
 		SIDE_LENGTH as usize,
 		WindowOptions::default(),
 	)
-		.expect("something happened :(");
+		.expect("ERROR: Window failed to open!");
 	window.limit_update_rate(None);
 
 	const fn from_u8_rgb(r: u8, g: u8, b: u8) -> u32 {
@@ -93,11 +95,9 @@ fn main() {
 	static mut INDEX: usize = 0;
 	let index_pixel = |x: u32, y: u32| unsafe {
 		if INDEX >= TOTAL_LINE_LENGTH || x == 0 || y == 0 {
-
+			// TODO: find out why some x and y values are somehow negative but always low numbers eg -2, -1
 		} else {
 			LINE_POINTS[INDEX] = [x as i32, y as i32];
-			// TODO: find out why this keeps saying (200, 200), it isn't incrementing???
-			println!("Indexed ({}, {})", x as i32, y as i32);
 			INDEX += 1;
 		}
 	};
@@ -111,7 +111,7 @@ fn main() {
 
 		loop {
 			index_pixel(round(x0), round(y0));
-			if x0 == x1 && y0 == y1 { break }
+			if x0 >= x1 && y0 >= y1 { break }
 
 			let e2 = 2.0 * error;
 
@@ -121,7 +121,7 @@ fn main() {
 				x0 += sx;
 			}
 
-			if e2 >= dx {
+			if e2 <= dx {
 				if y0 >= y1 { break }
 				error += dx;
 				y0 += sy;
@@ -134,8 +134,6 @@ fn main() {
 			let start = [POINTS[v[0]][0], POINTS[v[0]][1]];
 			let end = [POINTS[v[1]][0], POINTS[v[1]][1]];
 
-			println!("start & end: {start:?}, {end:?}");
-
 			drawline(start[0], start[1], end[0], end[1]);
 		}
 
@@ -145,7 +143,6 @@ fn main() {
 	};
 
 	loop {
-
 		rotate_points();
 
 		unsafe {
@@ -162,6 +159,7 @@ fn main() {
 			}
 			LINE_POINTS = [[0, 0]; TOTAL_LINE_LENGTH];
 			INDEX = 0;
+
 		};
 
 		window
@@ -172,8 +170,12 @@ fn main() {
 			.update_with_buffer(&buffer, SIDE_LENGTH as usize, SIDE_LENGTH as usize)
 			.unwrap();
 
+		buffer = vec![WHITE; (SIDE_LENGTH * SIDE_LENGTH) as usize];
+
 		if !window.is_open() {
 			std::process::exit(69);
 		};
+
+		sleep(Duration::from_millis(50));
 	}
 }
