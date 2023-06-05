@@ -1,17 +1,18 @@
+use std::mem::swap;
 use std::thread::sleep;
 use std::time::Duration;
 use minifb::*;
 
 fn main() {
 	static mut POINTS: [[f32; 3]; 8] = [
-		[600.0, 200.0, 100.0],  // A
-		[200.0, 200.0, 100.0],  // B
-		[200.0, 200.0, -100.0], // C
-		[600.0, 200.0, -100.0], // D
-		[200.0, 600.0, 100.0],  // E
-		[600.0, 600.0, 100.0],  // F
-		[200.0, 600.0, -100.0], // G
-		[600.0, 600.0, -100.0], // H
+		[600.0, 200.0, 200.0],  // A
+		[200.0, 200.0, 200.0],  // B
+		[200.0, 200.0, -200.0], // C
+		[600.0, 200.0, -200.0], // D
+		[200.0, 600.0, 200.0],  // E
+		[600.0, 600.0, 200.0],  // F
+		[200.0, 600.0, -200.0], // G
+		[600.0, 600.0, -200.0], // H
 	];
 	const CONNECTIONS: [[usize; 2]; 12] = [
 		[0, 1],
@@ -85,28 +86,30 @@ fn main() {
 	let blank_buffer: Vec<u32> = vec![WHITE; (SIDE_LENGTH * SIDE_LENGTH) as usize];
 
 	fn round(n: f32) -> u32 {
-		if n < 0.0 {
-			0
-		} else {
-			(n + 0.5).floor() as u32
-		}
+		(n + 0.5).floor() as u32
 	}
 
 	static mut INDEX: usize = 0;
-	let index_pixel = |x: u32, y: u32| unsafe {
-		if INDEX >= TOTAL_LINE_LENGTH || x == 0 || y == 0 {
-			// TODO: find out why some x and y values are somehow negative but always low numbers eg -2, -1
-		} else {
-			LINE_POINTS[INDEX] = [x as i32, y as i32];
-			INDEX += 1;
+	let index_pixel = |mut x: u32, mut y: u32| unsafe {
+		if x == 0 {
+			x += 1;
 		}
+		if y == 0 {
+			y += 1
+		}
+
+		LINE_POINTS[INDEX] = [x as i32, y as i32];
+		INDEX += 1;
 	};
 
-	let drawline = |mut x0: f32, mut y0: f32, x1: f32, y1: f32| {
-		let dx = (x1 - x0).abs();
-		let sx = if x0 < x1 { 1.0 } else { -1.0 };
-		let dy = -((y1 - y0).abs());
-		let sy = if y0 < y1 { 1.0 } else { -1.0 };
+	let drawline = |mut x0: f32, mut y0: f32, mut x1: f32, mut y1: f32|  {
+		if x0 > x1 { swap(&mut x0, &mut x1) }
+		if y0 > y1 { swap(&mut y0, &mut y1) }
+
+		let dx = x1 - x0;
+		let sx = 1.0;
+		let dy = y0 - y1;
+		let sy = 1.0;
 		let mut error = dx + dy;
 
 		loop {
@@ -136,10 +139,10 @@ fn main() {
 
 			drawline(start[0], start[1], end[0], end[1]);
 		}
-
+		// TODO: running rotate_z or any 2 simultaneously somehow breaks the relations of the points
 		rotate_x();
-		rotate_y();
-		rotate_z();
+		//rotate_y();
+		//rotate_z();
 	};
 
 	loop {
@@ -147,21 +150,20 @@ fn main() {
 
 		unsafe {
 			for i in LINE_POINTS {
-				if i == [0, 0] { continue }
-
+				if i == [0, 0] { continue };
+				// TODO: add depth (camera view)
 				let x = i[0];
 				let y = i[1];
 
 				if y <= SIDE_LENGTH as i32 {
-					let buffer_index = ((y - 1) * SIDE_LENGTH as i32 + x - 1) as usize;
+					let buffer_index = (( y - 1 ) * SIDE_LENGTH as i32 + x - 1) as usize;
 					buffer[buffer_index] = BLACK;
 				};
 			}
 			LINE_POINTS = [[0, 0]; TOTAL_LINE_LENGTH];
 			INDEX = 0;
-
 		};
-
+		// TODO: instead of the below, store index in LINE_POINTS and via loop set each black pixel to white <3
 		window
 			.update_with_buffer(&blank_buffer, SIDE_LENGTH as usize, SIDE_LENGTH as usize)
 			.unwrap();
@@ -176,6 +178,6 @@ fn main() {
 			std::process::exit(69);
 		};
 
-		sleep(Duration::from_millis(50));
+		sleep(Duration::from_millis(10))
 	}
 }
