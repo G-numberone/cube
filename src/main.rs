@@ -94,7 +94,7 @@ fn main() {
 		.expect("Failed to create canvas!");
 
 	canvas.set_logical_size(window_length, window_length).expect("Failed to set logical size!");
-	canvas.set_draw_color(Color::RGB(0, 0, 0));
+	canvas.set_draw_color(Color::WHITE);
 	canvas.clear();
 
 	loop {
