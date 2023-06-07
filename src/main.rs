@@ -76,22 +76,24 @@ fn main() {
 		(x + 0.5) as i32
 	}
 
-	let sdl_context = sdl2::init().unwrap();
+	let sdl_context = sdl2::init().expect("Failed to initialise sdl context!");
 	let video_subsystem = sdl_context.video().unwrap();
 
 	let window_length = 800;
 	let window = video_subsystem.window("wa'er", window_length, window_length)
-		.position_centered()
+		.allow_highdpi()
+		.input_grabbed()
+		.opengl()
 		.build()
-		.unwrap();
+		.expect("Failed to create window!");
 
 	let mut canvas = window.into_canvas()
 		.present_vsync()
-		//.accelerated()
+		.accelerated()
 		.build()
-		.unwrap();
+		.expect("Failed to create canvas!");
 
-	canvas.set_logical_size(window_length, window_length).unwrap();
+	canvas.set_logical_size(window_length, window_length).expect("Failed to set logical size!");
 	canvas.set_draw_color(Color::RGB(0, 0, 0));
 	canvas.clear();
 
@@ -110,7 +112,7 @@ fn main() {
 				canvas.draw_line(
 					Point::new(round(start[0]), round(start[1])),
 					Point::new(round(end[0]), round(end[1]))
-				).unwrap();
+				).expect("Failed to draw line!");
 			}
 
 			canvas.present();
