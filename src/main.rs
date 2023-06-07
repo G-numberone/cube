@@ -1,7 +1,7 @@
-use std::mem::swap;
-use std::thread::sleep;
-use std::time::Duration;
-use minifb::*;
+use sdl2::pixels::Color;
+use sdl2::rect::Point;
+//use reqwest;
+use ndarray::*;
 
 fn main() {
 	static mut POINTS: [[f32; 3]; 8] = [
@@ -29,155 +29,91 @@ fn main() {
 		[6, 7],
 	];
 
-	const TOTAL_LINE_LENGTH: usize = 8000;
-	static mut LINE_POINTS: [[i32; 2]; TOTAL_LINE_LENGTH] = [[0, 0]; TOTAL_LINE_LENGTH];
-
-	let theta: f32 = 0.01;
+	let theta: f32 = 0.01_f32.to_radians();
 	let sine_theta: f32 = theta.sin();
 	let cosine_theta: f32 = theta.cos();
 
-	let rotate_x = || unsafe {
+	let u_x: f32 = 400.0;
+	let u_y: f32 = 400.0;
+	let u_z: f32 = 0.0;
+
+	let  rotation_matrix: Array2<f32> = arr2(&[
+		[
+			cosine_theta + u_x.powf(2.0) * (1.0 - cosine_theta),
+			u_x * u_y * (1.0 - cosine_theta) - u_z * sine_theta,
+			u_x * u_z * (1.0 - cosine_theta) + u_y * sine_theta
+		],
+		[
+			u_y * u_x * (1.0 - cosine_theta) + u_z * sine_theta,
+			cosine_theta + u_y.powf(2.0) * (1.0 - cosine_theta),
+			u_y * u_z * (1.0 - cosine_theta) - u_x * sine_theta
+		],
+		[
+			u_z * u_x * (1.0 - cosine_theta) - u_y * sine_theta,
+			u_z * u_y * (1.0 - cosine_theta) + u_x * sine_theta,
+			cosine_theta + u_z.powf(2.0) * (1.0 - cosine_theta)
+		],
+	]);
+
+	let rotate = || unsafe {
 		for point in POINTS.iter_mut() {
-			*point = [
+			let p_o = arr1(&[
 				point[0],
-				point[1] * cosine_theta + point[2] * -sine_theta,
-				point[1] * sine_theta + point[2] * cosine_theta,
-			];
-		}
-	};
-	let rotate_y = || unsafe {
-		for point in POINTS.iter_mut() {
-			*point = [
-				point[0] * cosine_theta + point[2] * sine_theta,
 				point[1],
-				point[0] * -sine_theta + point[2] * cosine_theta,
-			];
-		}
-	};
-	let rotate_z = || unsafe {
-		for point in POINTS.iter_mut() {
-			*point = [
-				point[0] * cosine_theta + point[1] * -sine_theta,
-				point[0] * sine_theta + point[1] * cosine_theta,
 				point[2],
+			]);
+
+			let product = rotation_matrix.dot(&p_o);
+			*point = [
+				product[0],
+				product[1],
+				product[2]
 			];
 		}
 	};
 
-	const SIDE_LENGTH: u32 = 800;
-	let mut window = Window::new(
-		"and so",
-		SIDE_LENGTH as usize,
-		SIDE_LENGTH as usize,
-		WindowOptions::default(),
-	)
-		.expect("ERROR: Window failed to open!");
-	window.limit_update_rate(None);
-
-	const fn from_u8_rgb(r: u8, g: u8, b: u8) -> u32 {
-		let (r, g, b) = (r as u32, g as u32, b as u32);
-		(r << 16) | (g << 8) | b
+	fn round(x: f32) -> i32 {
+		(x + 0.5) as i32
 	}
 
-	const WHITE: u32 = from_u8_rgb(255, 255, 255);
-	const BLACK: u32 = from_u8_rgb(0, 0, 0);
+	let sdl_context = sdl2::init().unwrap();
+	let video_subsystem = sdl_context.video().unwrap();
 
-	let mut buffer: Vec<u32> = vec![WHITE; (SIDE_LENGTH * SIDE_LENGTH) as usize];
-	let blank_buffer: Vec<u32> = vec![WHITE; (SIDE_LENGTH * SIDE_LENGTH) as usize];
+	let window_length = 800;
+	let window = video_subsystem.window("wa'er", window_length, window_length)
+		.position_centered()
+		.build()
+		.unwrap();
 
-	fn round(n: f32) -> u32 {
-		(n + 0.5).floor() as u32
-	}
+	let mut canvas = window.into_canvas()
+		.present_vsync()
+		//.accelerated()
+		.build()
+		.unwrap();
 
-	static mut INDEX: usize = 0;
-	let index_pixel = |mut x: u32, mut y: u32| unsafe {
-		if x == 0 {
-			x += 1;
-		}
-		if y == 0 {
-			y += 1
-		}
-
-		LINE_POINTS[INDEX] = [x as i32, y as i32];
-		INDEX += 1;
-	};
-
-	let drawline = |mut x0: f32, mut y0: f32, mut x1: f32, mut y1: f32|  {
-		if x0 > x1 { swap(&mut x0, &mut x1) }
-		if y0 > y1 { swap(&mut y0, &mut y1) }
-
-		let dx = x1 - x0;
-		let sx = 1.0;
-		let dy = y0 - y1;
-		let sy = 1.0;
-		let mut error = dx + dy;
-
-		loop {
-			index_pixel(round(x0), round(y0));
-			if x0 >= x1 && y0 >= y1 { break }
-
-			let e2 = 2.0 * error;
-
-			if e2 >= dy {
-				if x0 >= x1 { break }
-				error += dy;
-				x0 += sx;
-			}
-
-			if e2 <= dx {
-				if y0 >= y1 { break }
-				error += dx;
-				y0 += sy;
-			}
-		}
-	};
-
-	let rotate_points = || unsafe {
-		for v in CONNECTIONS {
-			let start = [POINTS[v[0]][0], POINTS[v[0]][1]];
-			let end = [POINTS[v[1]][0], POINTS[v[1]][1]];
-
-			drawline(start[0], start[1], end[0], end[1]);
-		}
-		// TODO: running rotate_z or any 2 simultaneously somehow breaks the relations of the points
-		rotate_x();
-		//rotate_y();
-		//rotate_z();
-	};
+	canvas.set_logical_size(window_length, window_length).unwrap();
+	canvas.set_draw_color(Color::RGB(0, 0, 0));
+	canvas.clear();
 
 	loop {
-		rotate_points();
+		rotate();
+
+		canvas.set_draw_color(Color::WHITE);
+		canvas.clear();
 
 		unsafe {
-			for i in LINE_POINTS {
-				if i == [0, 0] { continue };
-				// TODO: add depth (camera view)
-				let x = i[0];
-				let y = i[1];
+			canvas.set_draw_color(Color::BLACK);
+			for v in CONNECTIONS {
+				let start = [POINTS[v[0]][0], POINTS[v[0]][1]];
+				let end = [POINTS[v[1]][0], POINTS[v[1]][1]];
 
-				if y <= SIDE_LENGTH as i32 {
-					let buffer_index = (( y - 1 ) * SIDE_LENGTH as i32 + x - 1) as usize;
-					buffer[buffer_index] = BLACK;
-				};
+				canvas.draw_line(
+					Point::new(round(start[0]), round(start[1])),
+					Point::new(round(end[0]), round(end[1]))
+				).unwrap();
 			}
-			LINE_POINTS = [[0, 0]; TOTAL_LINE_LENGTH];
-			INDEX = 0;
-		};
-		// TODO: instead of the below, store index in LINE_POINTS and via loop set each black pixel to white <3
-		window
-			.update_with_buffer(&blank_buffer, SIDE_LENGTH as usize, SIDE_LENGTH as usize)
-			.unwrap();
 
-		window
-			.update_with_buffer(&buffer, SIDE_LENGTH as usize, SIDE_LENGTH as usize)
-			.unwrap();
-
-		buffer = vec![WHITE; (SIDE_LENGTH * SIDE_LENGTH) as usize];
-
-		if !window.is_open() {
-			std::process::exit(69);
-		};
-
-		sleep(Duration::from_millis(10))
+			canvas.present();
+		}
 	}
 }
