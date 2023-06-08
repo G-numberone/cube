@@ -4,15 +4,17 @@ use sdl2::rect::Point;
 use ndarray::*;
 
 fn main() {
+	const CUBE_SIDE_LENGTH: f32 = 400.0;
+
 	static mut POINTS: [[f32; 3]; 8] = [
-		[600.0, 200.0, 200.0],  // A
-		[200.0, 200.0, 200.0],  // B
-		[200.0, 200.0, -200.0], // C
-		[600.0, 200.0, -200.0], // D
-		[200.0, 600.0, 200.0],  // E
-		[600.0, 600.0, 200.0],  // F
-		[200.0, 600.0, -200.0], // G
-		[600.0, 600.0, -200.0], // H
+		[CUBE_SIDE_LENGTH / 2.0, 200.0, 200.0],  // A ; x: 600
+		[-CUBE_SIDE_LENGTH / 2.0, 200.0, 200.0],  // B ; x: 200
+		[-CUBE_SIDE_LENGTH / 2.0, 200.0, -200.0], // C
+		[CUBE_SIDE_LENGTH / 2.0, 200.0, -200.0], // D
+		[-CUBE_SIDE_LENGTH / 2.0, 600.0, 200.0],  // E
+		[CUBE_SIDE_LENGTH / 2.0, 600.0, 200.0],  // F
+		[-CUBE_SIDE_LENGTH / 2.0, 600.0, -200.0], // G
+		[CUBE_SIDE_LENGTH / 2.0, 600.0, -200.0], // H
 	];
 	const CONNECTIONS: [[usize; 2]; 12] = [
 		[0, 1],
@@ -29,15 +31,15 @@ fn main() {
 		[6, 7],
 	];
 
-	let theta: f32 = 0.01_f32.to_radians();
+	let theta: f32 = 0.005_f32.to_radians();
 	let sine_theta: f32 = theta.sin();
 	let cosine_theta: f32 = theta.cos();
 
-	let u_x: f32 = 400.0;
-	let u_y: f32 = 400.0;
-	let u_z: f32 = 0.0;
+	let u_x: f32 = 2.0;
+	let u_y: f32 = 2.0;
+	let u_z: f32 = 2.0;
 
-	let  rotation_matrix: Array2<f32> = arr2(&[
+	let rotation_matrix: Array2<f32> = arr2(&[
 		[
 			cosine_theta + u_x.powf(2.0) * (1.0 - cosine_theta),
 			u_x * u_y * (1.0 - cosine_theta) - u_z * sine_theta,
@@ -63,7 +65,7 @@ fn main() {
 				point[2],
 			]);
 
-			let product = rotation_matrix.dot(&p_o);
+			let product = p_o.dot(&rotation_matrix);
 			*point = [
 				product[0],
 				product[1],
@@ -82,8 +84,7 @@ fn main() {
 	let window_length = 800;
 	let window = video_subsystem.window("wa'er", window_length, window_length)
 		.allow_highdpi()
-		.input_grabbed()
-		.opengl()
+		.borderless()
 		.build()
 		.expect("Failed to create window!");
 
@@ -110,8 +111,8 @@ fn main() {
 				let end = [POINTS[v[1]][0], POINTS[v[1]][1]];
 
 				canvas.draw_line(
-					Point::new(round(start[0]), round(start[1])),
-					Point::new(round(end[0]), round(end[1]))
+					Point::new(round(start[0]) + 200, round(start[1]) + 200),
+					Point::new(round(end[0]) + 200, round(end[1]) + 200)
 				).expect("Failed to draw line!");
 			}
 
