@@ -7,14 +7,14 @@ fn main() {
 	const CUBE_SIDE_LENGTH: f32 = 400.0;
 
 	static mut POINTS: [[f32; 3]; 8] = [
-		[CUBE_SIDE_LENGTH / 2.0, 200.0, 200.0],  // A ; x: 600
-		[-CUBE_SIDE_LENGTH / 2.0, 200.0, 200.0],  // B ; x: 200
-		[-CUBE_SIDE_LENGTH / 2.0, 200.0, -200.0], // C
-		[CUBE_SIDE_LENGTH / 2.0, 200.0, -200.0], // D
-		[-CUBE_SIDE_LENGTH / 2.0, 600.0, 200.0],  // E
-		[CUBE_SIDE_LENGTH / 2.0, 600.0, 200.0],  // F
-		[-CUBE_SIDE_LENGTH / 2.0, 600.0, -200.0], // G
-		[CUBE_SIDE_LENGTH / 2.0, 600.0, -200.0], // H
+		[  CUBE_SIDE_LENGTH / 2.0 , -CUBE_SIDE_LENGTH / 2.0 ,  CUBE_SIDE_LENGTH / 2.0 ], // A ; x: 600
+		[ -CUBE_SIDE_LENGTH / 2.0 , -CUBE_SIDE_LENGTH / 2.0 ,  CUBE_SIDE_LENGTH / 2.0 ], // B ; x: 200
+		[ -CUBE_SIDE_LENGTH / 2.0 , -CUBE_SIDE_LENGTH / 2.0 , -CUBE_SIDE_LENGTH / 2.0 ], // C
+		[  CUBE_SIDE_LENGTH / 2.0 , -CUBE_SIDE_LENGTH / 2.0 , -CUBE_SIDE_LENGTH / 2.0 ], // D
+		[ -CUBE_SIDE_LENGTH / 2.0 ,  CUBE_SIDE_LENGTH / 2.0 ,  CUBE_SIDE_LENGTH / 2.0 ], // E
+		[  CUBE_SIDE_LENGTH / 2.0 ,  CUBE_SIDE_LENGTH / 2.0 ,  CUBE_SIDE_LENGTH / 2.0 ], // F
+		[ -CUBE_SIDE_LENGTH / 2.0 ,  CUBE_SIDE_LENGTH / 2.0 , -CUBE_SIDE_LENGTH / 2.0 ], // G
+		[  CUBE_SIDE_LENGTH / 2.0 ,  CUBE_SIDE_LENGTH / 2.0 , -CUBE_SIDE_LENGTH / 2.0 ], // H
 	];
 	const CONNECTIONS: [[usize; 2]; 12] = [
 		[0, 1],
