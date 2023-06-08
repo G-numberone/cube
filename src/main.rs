@@ -124,7 +124,7 @@ fn main() {
 			for v in CONNECTIONS {
 				let start = [POINTS[v[0]][0], POINTS[v[0]][1]];
 				let end = [POINTS[v[1]][0], POINTS[v[1]][1]];
-
+				// TODO: add depth
 				canvas.draw_line(
 					Point::new(
 						round(start[0]) + CUBE_SIDE_LENGTH as i32,
