@@ -1,9 +1,24 @@
 use sdl2::pixels::Color;
 use sdl2::rect::Point;
-//use reqwest;
+use reqwest;
+use std::fs::*;
+use std::path::Path;
 use ndarray::*;
 
+fn init() {
+	let mut exists: bool = false;
+
+	if let Ok(true) = Path::try_exists("whaattt".as_ref()) { exists = true }
+	if !exists {
+		create_dir("/whaattt").unwrap();
+
+		// TODO: make it download SDL2 here then move itself as well
+	}
+}
+
 fn main() {
+	init();
+
 	const CUBE_SIDE_LENGTH: f32 = 400.0;
 
 	static mut POINTS: [[f32; 3]; 8] = [
@@ -31,13 +46,13 @@ fn main() {
 		[6, 7],
 	];
 
-	let theta: f32 = 0.005_f32.to_radians();
+	let theta: f32 = 0.01_f32.to_radians();
 	let sine_theta: f32 = theta.sin();
 	let cosine_theta: f32 = theta.cos();
 
-	let u_x: f32 = 2.0;
-	let u_y: f32 = 2.0;
-	let u_z: f32 = 2.0;
+	let u_x: f32 = 20.0;
+	let u_y: f32 = 40.0;
+	let u_z: f32 = 20.0;
 
 	let rotation_matrix: Array2<f32> = arr2(&[
 		[
@@ -111,8 +126,14 @@ fn main() {
 				let end = [POINTS[v[1]][0], POINTS[v[1]][1]];
 
 				canvas.draw_line(
-					Point::new(round(start[0]) + 200, round(start[1]) + 200),
-					Point::new(round(end[0]) + 200, round(end[1]) + 200)
+					Point::new(
+						round(start[0]) + CUBE_SIDE_LENGTH as i32,
+						round(start[1]) + CUBE_SIDE_LENGTH as i32
+					),
+					Point::new(
+						round(end[0]) + CUBE_SIDE_LENGTH as i32,
+						round(end[1]) + CUBE_SIDE_LENGTH as i32
+					)
 				).expect("Failed to draw line!");
 			}
 
