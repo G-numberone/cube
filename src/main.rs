@@ -17,7 +17,7 @@ fn init() {
 }
 
 fn main() {
-	init();
+	//init();
 
 	const CUBE_SIDE_LENGTH: f32 = 400.0;
 
@@ -50,9 +50,11 @@ fn main() {
 	let sine_theta: f32 = theta.sin();
 	let cosine_theta: f32 = theta.cos();
 
-	let u_x: f32 = 20.0;
-	let u_y: f32 = 40.0;
-	let u_z: f32 = 20.0;
+	let (u_x, u_y, u_z) = (
+		20.0_f32,
+		40.0_f32,
+		20.0_f32
+	);
 
 	let rotation_matrix: Array2<f32> = arr2(&[
 		[
@@ -113,6 +115,41 @@ fn main() {
 	canvas.set_draw_color(Color::WHITE);
 	canvas.clear();
 
+	let (camera_x, camera_y, camera_z) = (
+		0.0_f32,
+		0.0_f32,
+		0.0_f32
+	);
+	let (angle_x, angle_y, angle_z) = (
+		0.0_f32,
+		0.0_f32,
+		0.0_f32
+	);
+	let (cam_offset_x, cam_offset_y, cam_offset_z) = (
+		0.0_f32,
+		0.0_f32,
+		0.0_f32
+	);
+
+	let camera_transform = |point_a: [f32; 3]| -> [f32; 2] {
+		let (x, y, z) = (
+			point_a[0] - camera_x,
+			point_a[1] - camera_y,
+			point_a[2] - camera_z
+		);
+		let (d_x, d_y, d_z) = (
+			angle_y.cos() * (angle_z.sin() * y + angle_z.cos() * x) - angle_y.sin() * z,
+			angle_x.sin() * (angle_y.cos() * z + angle_y.sin() * (angle_z.sin() * y + angle_z.cos() * x)) + angle_x.cos() * (angle_z.cos() * y - angle_z.sin() * x),
+			angle_x.cos() * (angle_z.cos() * z + angle_y.sin() * (angle_z.sin() * y + angle_z.cos() * x)) - angle_x.sin() * (angle_z.cos() * y - angle_z.sin() * x)
+		);
+		let (b_x, b_y) = (
+			(cam_offset_z / d_z) * d_x + cam_offset_x,
+			(cam_offset_z / d_z) * d_y + cam_offset_y
+		);
+
+		[b_x, b_y]
+	};
+
 	loop {
 		rotate();
 
@@ -122,9 +159,12 @@ fn main() {
 		unsafe {
 			canvas.set_draw_color(Color::BLACK);
 			for v in CONNECTIONS {
-				let start = [POINTS[v[0]][0], POINTS[v[0]][1]];
-				let end = [POINTS[v[1]][0], POINTS[v[1]][1]];
-				// TODO: add depth
+				let point_a1 = POINTS[v[0]];
+				let point_a2 = POINTS[v[1]];
+
+				let start = camera_transform(point_a1);
+				let end = camera_transform(point_a2);
+
 				canvas.draw_line(
 					Point::new(
 						round(start[0]) + CUBE_SIDE_LENGTH as i32,
