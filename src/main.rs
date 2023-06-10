@@ -8,9 +8,9 @@ use ndarray::*;
 fn init() {
 	let mut exists: bool = false;
 
-	if let Ok(true) = Path::try_exists("whaattt".as_ref()) { exists = true }
+	if let Ok(true) = Path::try_exists("./whaattt".as_ref()) { exists = true }
 	if !exists {
-		create_dir("/whaattt").unwrap();
+		create_dir("./whaattt").unwrap();
 
 		// TODO: make it download SDL2 here then move itself as well
 	}
@@ -118,7 +118,7 @@ fn main() {
 	let (camera_x, camera_y, camera_z) = (
 		0.0_f32,
 		0.0_f32,
-		0.0_f32
+		420.0_f32
 	);
 	let (angle_x, angle_y, angle_z) = (
 		0.0_f32,
@@ -128,7 +128,7 @@ fn main() {
 	let (cam_offset_x, cam_offset_y, cam_offset_z) = (
 		0.0_f32,
 		0.0_f32,
-		0.0_f32
+		-272.0_f32
 	);
 
 	let camera_transform = |point_a: [f32; 3]| -> [f32; 2] {
