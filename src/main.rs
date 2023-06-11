@@ -4,6 +4,7 @@ use reqwest;
 use std::fs::*;
 use std::path::Path;
 use ndarray::*;
+use std::mem::swap;
 
 fn init() {
 	let mut exists: bool = false;
@@ -115,6 +116,85 @@ fn main() {
 	canvas.set_draw_color(Color::WHITE);
 	canvas.clear();
 
+	let mut plot_pixel = |mut x: f32, mut y: f32, c: f32| {
+		let (x, y) = (round(x), round(y));
+
+		canvas.set_draw_color(Color::RGBA(255, 255, 255, round(c * 255.0) as u8));
+		canvas.draw_point(Point::new(x, y)).unwrap()
+	};
+	fn ipart(x: f32) -> f32 {
+		x.floor()
+	}
+	fn fpart(x: f32) -> f32 {
+		x - ipart(x)
+	}
+	fn rfpart(x: f32) -> f32 {
+		1.0 - fpart(x)
+	}
+
+	let mut draw_antialiased_line = |mut x0: f32, mut y0: f32, mut x1: f32, mut y1: f32| {
+		let steep = (y1 - y0).abs() > (x1 - x0).abs();
+
+		if steep {
+			swap(&mut x0, &mut y0);
+			swap(&mut x1, &mut y1)
+		}
+		if x0 > x1 {
+			swap(&mut x0, &mut x1);
+			swap(&mut y0, &mut y1)
+		}
+
+		let dx = x1 - x0;
+		let dy = y1 - y0;
+
+		let gradient = if dx == 0.0 { 1.0 } else { dy / dx };
+
+		let mut x_end = round(x0) as f32;
+		let mut y_end = y0 + gradient * (x_end - x0);
+		let mut x_gap = rfpart(x0 + 0.5);
+		let mut x_pxl_1 = x_end;
+		let mut y_pxl_1 = ipart(y_end);
+
+		if steep {
+			plot_pixel(y_pxl_1, x_pxl_1, rfpart(y_end) * x_gap);
+			plot_pixel(y_pxl_1 + 1.0, x_pxl_1, fpart(y_end) * x_gap)
+		} else {
+			plot_pixel(x_pxl_1, y_pxl_1, rfpart(y_end) * x_gap);
+			plot_pixel(x_pxl_1, y_pxl_1 + 1.0, fpart(y_end) * x_gap)
+		}
+
+		let mut inter_y = y_end + gradient;
+		x_end = round(x1) as f32;
+		y_end = y1 + gradient * (x_end - x1);
+		x_gap = fpart(x1 + 0.5);
+		let x_pxl_2 = x_end;
+		let y_pxl_2 = ipart(y_end);
+
+		if steep {
+			plot_pixel(y_pxl_2, x_pxl_2, rfpart(y_end) * x_gap);
+			plot_pixel(y_pxl_2 + 1.0, x_pxl_2, fpart(y_end) * x_gap)
+		} else {
+			plot_pixel(x_pxl_2, y_pxl_2, rfpart(y_end) * x_gap);
+			plot_pixel(x_pxl_2, y_pxl_2 + 1.0, fpart(y_end) * x_gap)
+		}
+
+		if steep {
+			for x in round(x_pxl_1 + 1.0)..round(x_pxl_2) {
+				plot_pixel(ipart(inter_y), x as f32, rfpart(inter_y));
+				plot_pixel(ipart(inter_y) + 1.0, x as f32, fpart(inter_y));
+
+				inter_y = inter_y + gradient;
+			}
+		} else {
+			for x in round(x_pxl_1 + 1.0)..round(x_pxl_2) {
+				plot_pixel(x as f32, ipart(inter_y), rfpart(inter_y));
+				plot_pixel(x as f32, ipart(inter_y) + 1.0, fpart(inter_y));
+
+				inter_y = inter_y + gradient;
+			}
+		}
+	};
+
 	let (camera_x, camera_y, camera_z) = (
 		0.0_f32,
 		0.0_f32,
@@ -165,6 +245,8 @@ fn main() {
 				let start = camera_transform(point_a1);
 				let end = camera_transform(point_a2);
 
+				draw_antialiased_line(start[0], start[1], end[0], end[1]);
+				/*
 				canvas.draw_line(
 					Point::new(
 						round(start[0]) + CUBE_SIDE_LENGTH as i32,
@@ -175,6 +257,7 @@ fn main() {
 						round(end[1]) + CUBE_SIDE_LENGTH as i32
 					)
 				).expect("Failed to draw line!");
+				*/
 			}
 
 			canvas.present();
