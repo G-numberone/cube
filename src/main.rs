@@ -65,7 +65,7 @@ fn main() {
 	//init();
 
 	const OBJ_SIDE_LENGTH: f32 = 300.0;
-	static mut POINTS: [[f32; 3]; 8] = [
+	static mut CUBE_POINTS: [[f32; 3]; 8] = [
 		[  OBJ_SIDE_LENGTH / 2.0 , -OBJ_SIDE_LENGTH / 2.0 ,  OBJ_SIDE_LENGTH / 2.0 ], // A ; x: 600
 		[ -OBJ_SIDE_LENGTH / 2.0 , -OBJ_SIDE_LENGTH / 2.0 ,  OBJ_SIDE_LENGTH / 2.0 ], // B ; x: 200
 		[ -OBJ_SIDE_LENGTH / 2.0 , -OBJ_SIDE_LENGTH / 2.0 , -OBJ_SIDE_LENGTH / 2.0 ], // C
@@ -75,7 +75,7 @@ fn main() {
 		[ -OBJ_SIDE_LENGTH / 2.0 ,  OBJ_SIDE_LENGTH / 2.0 , -OBJ_SIDE_LENGTH / 2.0 ], // G
 		[  OBJ_SIDE_LENGTH / 2.0 ,  OBJ_SIDE_LENGTH / 2.0 , -OBJ_SIDE_LENGTH / 2.0 ], // H
 	];
-	const CONNECTIONS: [[usize; 2]; 12] = [
+	const CUBE_CONNECTIONS: [[usize; 2]; 12] = [
 		[0, 1],
 		[0, 3],
 		[1, 2],
@@ -119,7 +119,7 @@ fn main() {
 	]);
 
 	let rotate = || unsafe {
-		for point in POINTS.iter_mut() {
+		for point in CUBE_POINTS.iter_mut() {
 			let p_o = arr1(&[
 				point[0],
 				point[1],
@@ -208,9 +208,9 @@ fn main() {
 
 		unsafe {
 			canvas.set_draw_color(Color::BLACK);
-			for v in CONNECTIONS {
-				let point_a1 = POINTS[v[0]];
-				let point_a2 = POINTS[v[1]];
+			for v in CUBE_CONNECTIONS {
+				let point_a1 = CUBE_POINTS[v[0]];
+				let point_a2 = CUBE_POINTS[v[1]];
 
 				let start = camera_transform(point_a1);
 				let end = camera_transform(point_a2);
