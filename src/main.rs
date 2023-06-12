@@ -1,21 +1,9 @@
 use sdl2::pixels::Color;
 use sdl2::rect::Point;
-use reqwest;
 use std::fs::*;
 use std::path::Path;
 use ndarray::*;
 use sdl2::video::WindowPos;
-
-fn init() {
-	let mut exists: bool = false;
-
-	if let Ok(true) = Path::try_exists("./whaattt".as_ref()) { exists = true }
-	if !exists {
-		create_dir("./whaattt").unwrap();
-
-		// TODO: make it download SDL2 here then move itself as well
-	}
-}
 
 static WINDOW_POSITIONS: [[i32; 2]; 8] = [
 	[0, 0],
@@ -40,7 +28,6 @@ unsafe fn get_window_count() -> usize {
 
 	let windows = String::from_utf8(read("open_windows.txt").unwrap()).unwrap();
 
-
 	if windows.len() >= 8 {
 		std::process::abort();
 	} else {
@@ -57,13 +44,7 @@ unsafe fn get_window_count() -> usize {
 	}
 }
 
-fn check_for_crashed_windows() {
-	todo!()
-}
-
 fn main() {
-	//init();
-
 	const OBJ_SIDE_LENGTH: f32 = 300.0;
 	static mut CUBE_POINTS: [[f32; 3]; 8] = [
 		[  OBJ_SIDE_LENGTH / 2.0 , -OBJ_SIDE_LENGTH / 2.0 ,  OBJ_SIDE_LENGTH / 2.0 ], // A ; x: 600
@@ -229,5 +210,6 @@ fn main() {
 
 			canvas.present();
 		}
+		// TODO: implement automatic multi-windows by for looping over the canvases legit everywhere
 	}
 }
