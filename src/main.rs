@@ -1,10 +1,10 @@
-use std::env::current_dir;
 use sdl2::pixels::Color;
 use sdl2::rect::Point;
 use reqwest;
 use std::fs::*;
 use std::path::Path;
 use ndarray::*;
+use sdl2::video::WindowPos;
 
 fn init() {
 	let mut exists: bool = false;
@@ -17,19 +17,63 @@ fn init() {
 	}
 }
 
+static WINDOW_POSITIONS: [[i32; 2]; 8] = [
+	[0, 0],
+	[500, 0],
+	[1000, 0],
+	[1500, 0],
+	[0, 500],
+	[500, 500],
+	[1000, 500],
+	[1500, 500]
+];
+static mut WINDOW_NUMBER: usize = 0;
+
+unsafe fn get_window_count() -> usize {
+	let mut exists: bool = false;
+
+	if let Ok(true) = Path::try_exists("open_windows.txt".as_ref()) { exists = true }
+	if !exists {
+		write("open_windows.txt", "0").unwrap();
+		return 0_usize
+	}
+
+	let windows = String::from_utf8(read("open_windows.txt").unwrap()).unwrap();
+
+
+	if windows.len() >= 8 {
+		std::process::abort();
+	} else {
+		loop {
+			if windows.contains(&WINDOW_NUMBER.to_string()) {
+				WINDOW_NUMBER += 1
+			} else {
+				let new_windows = format!("{}{}", &windows, WINDOW_NUMBER);
+				write("open_windows.txt", new_windows.as_str()).unwrap();
+				break
+			}
+		}
+		WINDOW_NUMBER
+	}
+}
+
+fn check_for_crashed_windows() {
+	todo!()
+}
+
 fn main() {
 	//init();
 
-	const CUBE_SIDE_LENGTH: f32 = 400.0;
+	const OBJ_SIDE_LENGTH: f32 = 300.0;
 	static mut POINTS: [[f32; 3]; 8] = [
-		[  CUBE_SIDE_LENGTH / 2.0 , -CUBE_SIDE_LENGTH / 2.0 ,  CUBE_SIDE_LENGTH / 2.0 ], // A ; x: 600
-		[ -CUBE_SIDE_LENGTH / 2.0 , -CUBE_SIDE_LENGTH / 2.0 ,  CUBE_SIDE_LENGTH / 2.0 ], // B ; x: 200
-		[ -CUBE_SIDE_LENGTH / 2.0 , -CUBE_SIDE_LENGTH / 2.0 , -CUBE_SIDE_LENGTH / 2.0 ], // C
-		[  CUBE_SIDE_LENGTH / 2.0 , -CUBE_SIDE_LENGTH / 2.0 , -CUBE_SIDE_LENGTH / 2.0 ], // D
-		[ -CUBE_SIDE_LENGTH / 2.0 ,  CUBE_SIDE_LENGTH / 2.0 ,  CUBE_SIDE_LENGTH / 2.0 ], // E
-		[  CUBE_SIDE_LENGTH / 2.0 ,  CUBE_SIDE_LENGTH / 2.0 ,  CUBE_SIDE_LENGTH / 2.0 ], // F
-		[ -CUBE_SIDE_LENGTH / 2.0 ,  CUBE_SIDE_LENGTH / 2.0 , -CUBE_SIDE_LENGTH / 2.0 ], // G
-		[  CUBE_SIDE_LENGTH / 2.0 ,  CUBE_SIDE_LENGTH / 2.0 , -CUBE_SIDE_LENGTH / 2.0 ], // H
+		[  OBJ_SIDE_LENGTH / 2.0 , -OBJ_SIDE_LENGTH / 2.0 ,  OBJ_SIDE_LENGTH / 2.0 ], // A ; x: 600
+		[ -OBJ_SIDE_LENGTH / 2.0 , -OBJ_SIDE_LENGTH / 2.0 ,  OBJ_SIDE_LENGTH / 2.0 ], // B ; x: 200
+		[ -OBJ_SIDE_LENGTH / 2.0 , -OBJ_SIDE_LENGTH / 2.0 , -OBJ_SIDE_LENGTH / 2.0 ], // C
+		[  OBJ_SIDE_LENGTH / 2.0 , -OBJ_SIDE_LENGTH / 2.0 , -OBJ_SIDE_LENGTH / 2.0 ], // D
+		[ -OBJ_SIDE_LENGTH / 2.0 ,  OBJ_SIDE_LENGTH / 2.0 ,  OBJ_SIDE_LENGTH / 2.0 ], // E
+		[  OBJ_SIDE_LENGTH / 2.0 ,  OBJ_SIDE_LENGTH / 2.0 ,  OBJ_SIDE_LENGTH / 2.0 ], // F
+		[ -OBJ_SIDE_LENGTH / 2.0 ,  OBJ_SIDE_LENGTH / 2.0 , -OBJ_SIDE_LENGTH / 2.0 ], // G
+		[  OBJ_SIDE_LENGTH / 2.0 ,  OBJ_SIDE_LENGTH / 2.0 , -OBJ_SIDE_LENGTH / 2.0 ], // H
 	];
 	const CONNECTIONS: [[usize; 2]; 12] = [
 		[0, 1],
@@ -98,12 +142,18 @@ fn main() {
 	let sdl_context = sdl2::init().expect("Failed to initialise sdl context!");
 	let video_subsystem = sdl_context.video().unwrap();
 
-	let window_length = 800;
-	let window = video_subsystem.window("wa'er", window_length, window_length)
+	let window_length = 500;
+	let mut window = video_subsystem.window("virus.exe", window_length, window_length)
 		.allow_highdpi()
 		.borderless()
 		.build()
 		.expect("Failed to create window!");
+
+	unsafe {
+		let pos = WINDOW_POSITIONS[get_window_count()];
+		let (x, y) = (WindowPos::Positioned(pos[0]), WindowPos::Positioned(pos[1]));
+		window.set_position(x, y);
+	}
 
 	let mut canvas = window.into_canvas()
 		.present_vsync()
@@ -167,12 +217,12 @@ fn main() {
 
 				canvas.draw_line(
 					Point::new(
-						round(start[0]) + CUBE_SIDE_LENGTH as i32,
-						round(start[1]) + CUBE_SIDE_LENGTH as i32
+						round(start[0]) + window_length as i32 / 2,
+						round(start[1]) + window_length as i32 / 2
 					),
 					Point::new(
-						round(end[0]) + CUBE_SIDE_LENGTH as i32,
-						round(end[1]) + CUBE_SIDE_LENGTH as i32
+						round(end[0]) + window_length as i32 / 2,
+						round(end[1]) + window_length as i32 / 2
 					)
 				).expect("Failed to draw line!");
 			}
