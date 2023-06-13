@@ -29,7 +29,8 @@ unsafe fn get_window_count() -> usize {
 	let windows = String::from_utf8(read("open_windows.txt").unwrap()).unwrap();
 
 	if windows.len() >= 8 {
-		std::process::abort();
+		write("open_windows.txt", "").unwrap();
+		0_usize
 	} else {
 		loop {
 			if windows.contains(&WINDOW_NUMBER.to_string()) {
@@ -124,17 +125,18 @@ fn main() {
 	let video_subsystem = sdl_context.video().unwrap();
 
 	let window_length = 500;
-	let mut window = video_subsystem.window("virus.exe", window_length, window_length)
+	let mut window = video_subsystem.window("virus.exe", 2048, 1024)
 		.allow_highdpi()
 		.borderless()
+		.fullscreen_desktop()
 		.build()
 		.expect("Failed to create window!");
 
-	unsafe {
-		let pos = WINDOW_POSITIONS[get_window_count()];
-		let (x, y) = (WindowPos::Positioned(pos[0]), WindowPos::Positioned(pos[1]));
-		window.set_position(x, y);
-	}
+	//unsafe {
+	//	let pos = WINDOW_POSITIONS[get_window_count()];
+	//	let (x, y) = (WindowPos::Positioned(pos[0]), WindowPos::Positioned(pos[1]));
+	//	window.set_position(x, y);
+	//}
 
 	let mut canvas = window.into_canvas()
 		.present_vsync()
@@ -142,24 +144,24 @@ fn main() {
 		.build()
 		.expect("Failed to create canvas!");
 
-	canvas.set_logical_size(window_length, window_length).expect("Failed to set logical size!");
+	//canvas.set_logical_size(window_length, window_length).expect("Failed to set logical size!");
 	canvas.set_draw_color(Color::WHITE);
 	canvas.clear();
 
 	let (camera_x, camera_y, camera_z) = (
 		0.0_f32,
 		0.0_f32,
-		420.0_f32
+		220.0_f32
 	);
 	let (angle_x, angle_y, angle_z) = (
-		0.0_f32,
-		0.0_f32,
-		0.0_f32
+		35.0_f32,
+		27.0_f32,
+		23.0_f32
 	);
 	let (cam_offset_x, cam_offset_y, cam_offset_z) = (
 		0.0_f32,
 		0.0_f32,
-		-272.0_f32
+		-572.0_f32
 	);
 
 	let camera_transform = |point_a: [f32; 3]| -> [f32; 2] {
@@ -198,12 +200,12 @@ fn main() {
 
 				canvas.draw_line(
 					Point::new(
-						round(start[0]) + window_length as i32 / 2,
-						round(start[1]) + window_length as i32 / 2
+						round(start[0]) + 1024, // window_length / 2,
+						round(start[1]) + 512 // window_length / 2
 					),
 					Point::new(
-						round(end[0]) + window_length as i32 / 2,
-						round(end[1]) + window_length as i32 / 2
+						round(end[0]) + 1024, // window_length / 2,
+						round(end[1]) + 512 // window_length / 2
 					)
 				).expect("Failed to draw line!");
 			}
